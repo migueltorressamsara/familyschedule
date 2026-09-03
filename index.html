@@ -287,6 +287,21 @@
 
   footer{color:var(--ink-faint);font-size:0.8rem;text-align:center;margin-top:2.5rem;}
   .offline-note{font-size:0.78rem;color:var(--ink-faint);text-align:center;margin-top:0.6rem;}
+
+  /* Phone: everything is set in rem, so bumping the root size scales the
+     whole page — type, padding, gaps, badges — proportionally in one move. */
+  @media (max-width: 640px){
+    html{font-size:19px;}
+    body{line-height:1.6;}
+    .wrap{padding:1.2rem 1rem 5rem;}
+    .masthead h1{font-size:1.7rem;}
+    section > h2{font-size:1.2rem;}
+    .day-row{grid-template-columns:2.6rem 1fr auto;column-gap:0.5rem;}
+    .task input[type=checkbox], .todo-item input[type=checkbox]{width:22px;height:22px;}
+    .badge{padding:0.3rem 0.65rem;}
+    nav.jump{gap:0.4rem;}
+    nav.jump a{padding:0.4rem 0.8rem;}
+  }
 </style>
 
 <div id="gate">
