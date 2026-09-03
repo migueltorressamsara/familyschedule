@@ -1,0 +1,1384 @@
+<!doctype html>
+<title>Casa Torres Pavón</title>
+<meta name="description" content="Shared, editable daycare/Nala/MBA duty schedule and trip planner for Ale and Mike — check off tasks, edit assignments, track trips.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFF1E8;
+    --paper: #FBFAF5;
+    --paper-raised: #FFFFFF;
+    --ink: #26322B;
+    --ink-soft: #59635B;
+    --ink-faint: #8A9188;
+    --line: #DBD9C9;
+    --line-strong: #C7C4AF;
+    --ochre: #B8790F;
+    --ochre-bg: #F7E9CF;
+    --teal: #3F6459;
+    --teal-bg: #E1EAE5;
+    --clay: #A8492F;
+    --clay-bg: #F5E1D7;
+    --trip: #3A5A78;
+    --trip-bg: #DDE6EE;
+    --good: #3F6459;
+    --focus: #B8790F;
+    --shadow: 0 1px 2px rgba(38,50,43,0.06), 0 4px 14px rgba(38,50,43,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #1B2019;
+      --paper: #23291F;
+      --paper-raised: #2A3123;
+      --ink: #EDEFE6;
+      --ink-soft: #AEB6A6;
+      --ink-faint: #7C8375;
+      --line: #3A4433;
+      --line-strong: #4A5540;
+      --ochre: #E0A94A;
+      --ochre-bg: #3A3020;
+      --teal: #7FAE9E;
+      --teal-bg: #223530;
+      --clay: #DA8567;
+      --clay-bg: #3B2A22;
+      --trip: #8FB4D6;
+      --trip-bg: #232F3B;
+      --good: #7FAE9E;
+      --focus: #E0A94A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #1B2019;
+    --paper: #23291F;
+    --paper-raised: #2A3123;
+    --ink: #EDEFE6;
+    --ink-soft: #AEB6A6;
+    --ink-faint: #7C8375;
+    --line: #3A4433;
+    --line-strong: #4A5540;
+    --ochre: #E0A94A;
+    --ochre-bg: #3A3020;
+    --teal: #7FAE9E;
+    --teal-bg: #223530;
+    --clay: #DA8567;
+    --clay-bg: #3B2A22;
+    --trip: #8FB4D6;
+    --trip-bg: #232F3B;
+    --good: #7FAE9E;
+    --focus: #E0A94A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Work Sans',sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;margin:0;text-wrap:balance;}
+  button, input, select, textarea{font-family:inherit;font-size:inherit;color:inherit;}
+  button{cursor:pointer;}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ---------- Gate ---------- */
+  #gate{
+    position:fixed;inset:0;background:var(--bg);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:1.5rem;
+  }
+  #gate[hidden]{display:none;}
+  .gate-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:16px;
+    padding:2.2rem 2rem;max-width:360px;width:100%;box-shadow:var(--shadow);
+    text-align:center;
+  }
+  .gate-card .tag{font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:0.5rem;}
+  .gate-card h1{font-size:1.6rem;margin-bottom:1.4rem;}
+  .gate-card input[type=password]{
+    width:100%;padding:0.7rem 0.9rem;border:1px solid var(--line-strong);border-radius:8px;
+    background:var(--paper-raised);color:var(--ink);margin-bottom:0.7rem;
+  }
+  .gate-card .err{color:var(--clay);font-size:0.85rem;min-height:1.2em;margin-bottom:0.4rem;}
+  .gate-btn{
+    width:100%;padding:0.7rem;border:none;border-radius:8px;background:var(--teal);color:var(--paper);
+    font-weight:600;letter-spacing:0.01em;
+  }
+  .gate-btn:hover{opacity:0.92;}
+  .who-tiles{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin:0.4rem 0 1rem;}
+  .who-tile{
+    padding:1.1rem 0.6rem;border:1px solid var(--line-strong);border-radius:10px;background:var(--paper-raised);
+    font-family:'Fraunces',serif;font-size:1.05rem;
+  }
+  .who-tile:hover{border-color:var(--teal);}
+  .who-tile.ale{color:var(--ochre);}
+  .who-tile.miguel{color:var(--teal);}
+  .gate-sub{font-size:0.82rem;color:var(--ink-faint);margin-top:0.9rem;}
+
+  /* ---------- Shell ---------- */
+  .wrap{max-width:840px;margin:0 auto;padding:1.4rem 1.25rem 5rem;}
+  #app[hidden]{display:none;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:0.8rem;
+    padding:0.6rem 0;margin-bottom:1.2rem;
+  }
+  .whoami{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--ink-soft);}
+  .whoami .name{font-weight:600;color:var(--ink);}
+  .whoami .swap{background:none;border:none;color:var(--teal);text-decoration:underline;font-size:0.82rem;padding:0;}
+  .theme-hint{font-size:0.75rem;color:var(--ink-faint);}
+
+  .masthead{margin-bottom:1.6rem;}
+  .masthead .tag{font-size:0.85rem;color:var(--ink-soft);margin-bottom:0.4rem;}
+  .masthead h1{font-size:2.05rem;line-height:1.12;letter-spacing:-0.01em;}
+  .masthead p{color:var(--ink-soft);margin:0.6rem 0 0;max-width:560px;font-size:0.98rem;}
+
+  nav.jump{display:flex;gap:0.5rem;flex-wrap:wrap;margin:1.5rem 0 2.2rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:0.7rem 0;}
+  nav.jump a{font-size:0.85rem;color:var(--teal);text-decoration:none;padding:0.3rem 0.7rem;border:1px solid var(--line);border-radius:100px;background:var(--paper);}
+  nav.jump a:hover{border-color:var(--teal);}
+
+  section{margin-bottom:3rem;}
+  section > h2{font-size:1.35rem;margin-bottom:0.3rem;}
+  section > .sub{color:var(--ink-soft);font-size:0.92rem;margin-bottom:1.2rem;}
+
+  .callout{background:var(--clay-bg);border-left:3px solid var(--clay);padding:0.9rem 1.1rem;border-radius:0 6px 6px 0;font-size:0.92rem;margin-bottom:1.5rem;}
+  .callout b{color:var(--clay);}
+  .callout.good{background:var(--teal-bg);border-left-color:var(--teal);}
+  .callout.good b{color:var(--teal);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-bottom:1.4rem;font-size:0.85rem;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:0.4rem;}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .dot.miguel{background:var(--teal);}
+  .dot.ale{background:var(--ochre);}
+  .dot.shared{background:var(--ink-faint);}
+  .dot.flag{background:var(--clay);}
+  .dot.trip{background:var(--trip);}
+
+  details.timeline{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:0.7rem;}
+  details.timeline summary{cursor:pointer;font-family:'Fraunces',serif;font-size:1.02rem;font-weight:500;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+  details.timeline summary::-webkit-details-marker{display:none;}
+  details.timeline summary .chev{color:var(--ink-soft);font-size:0.8rem;transition:transform 0.15s;}
+  details.timeline[open] summary .chev{transform:rotate(90deg);}
+  details.timeline table{width:100%;border-collapse:collapse;margin-top:0.9rem;font-size:0.88rem;}
+  details.timeline td{padding:0.35rem 0.4rem;border-top:1px solid var(--line);vertical-align:top;}
+  details.timeline td:first-child{white-space:nowrap;color:var(--ink-soft);width:5.2rem;}
+  details.timeline td:last-child{white-space:nowrap;text-align:right;font-weight:500;width:5.8rem;}
+
+  .why-box{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;font-size:0.9rem;color:var(--ink-soft);margin-top:0.8rem;}
+  .why-box b{color:var(--ink);}
+  .why-box ul{margin:0.5rem 0 0;padding-left:1.1rem;}
+  .why-box li{margin-bottom:0.4rem;}
+
+  /* ---------- Today ---------- */
+  .today-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.3rem 1.4rem;box-shadow:var(--shadow);}
+  .today-card .date-big{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:0.5rem;}
+  .today-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.9rem;margin-top:0.9rem;}
+  .today-stat{border-top:1px solid var(--line);padding-top:0.6rem;}
+  .today-stat .k{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-faint);margin-bottom:0.2rem;}
+  .today-stat .v{font-size:1rem;font-weight:600;}
+
+  /* ---------- Stat strip ---------- */
+  .stat-strip{display:flex;gap:0.4rem;margin-bottom:1.3rem;border-radius:8px;overflow:hidden;height:10px;}
+  .stat-strip span{display:block;height:100%;}
+  .stat-legend{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;font-size:0.78rem;color:var(--ink-soft);margin-bottom:1.6rem;}
+  .stat-legend b{color:var(--ink);}
+
+  /* ---------- Day rows ---------- */
+  .week-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);margin:1.4rem 0 0.2rem;}
+  .week-label:first-of-type{margin-top:0;}
+
+  .day{border-top:1px solid var(--line);padding:0.6rem 0;}
+  .day:first-of-type{border-top:none;}
+  .day-row{display:grid;grid-template-columns:3.6rem 1fr auto;gap:0.7rem;align-items:baseline;cursor:pointer;}
+  .day-row .date{font-family:'Fraunces',serif;font-size:0.95rem;}
+  .day-row .date .dow{display:block;font-family:'Work Sans',sans-serif;font-size:0.7rem;color:var(--ink-soft);}
+  .day.is-today .date{color:var(--focus);}
+  .day-row .note{font-size:0.82rem;color:var(--ink-soft);grid-column:1 / -1;margin-top:0.15rem;}
+  .badge{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.78rem;padding:0.15rem 0.55rem;border-radius:100px;font-weight:500;white-space:nowrap;}
+  .badge.miguel{background:var(--teal-bg);color:var(--teal);}
+  .badge.ale{background:var(--ochre-bg);color:var(--ochre);}
+  .badge.shared{background:var(--line);color:var(--ink-soft);}
+  .badge.flag{background:var(--clay-bg);color:var(--clay);}
+  .badge.trip{background:var(--trip-bg);color:var(--trip);}
+  .expand-hint{font-size:0.78rem;color:var(--ink-faint);}
+
+  .day-detail{display:none;margin-top:0.8rem;padding:0.9rem 1rem;background:var(--paper);border:1px solid var(--line);border-radius:10px;}
+  .day.open .day-detail{display:block;}
+  .day.open .day-row .expand-hint{display:none;}
+
+  .backup-flag{font-size:0.82rem;background:var(--clay-bg);color:var(--clay);border-radius:6px;padding:0.4rem 0.6rem;margin-bottom:0.7rem;font-weight:500;}
+
+  .tasklist{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.8rem;}
+  .task{display:flex;align-items:baseline;gap:0.55rem;font-size:0.9rem;}
+  .task input[type=checkbox]{width:16px;height:16px;accent-color:var(--good);margin-top:0.15rem;flex-shrink:0;}
+  .task label{flex:1;cursor:pointer;}
+  .task label.done{color:var(--ink-faint);text-decoration:line-through;}
+  .task .by{font-size:0.72rem;color:var(--ink-faint);white-space:nowrap;}
+  .empty-tasks{font-size:0.85rem;color:var(--ink-faint);font-style:italic;margin-bottom:0.8rem;}
+
+  .edit-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;border-top:1px solid var(--line);padding-top:0.7rem;}
+  .edit-row select, .edit-row input[type=text]{
+    padding:0.4rem 0.55rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);font-size:0.85rem;
+  }
+  .edit-row input[type=text]{flex:1;min-width:140px;}
+  .edit-row button{padding:0.4rem 0.8rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);font-size:0.82rem;}
+  .edit-row button.primary{background:var(--teal);color:var(--paper);border-color:var(--teal);}
+  .saved-hint{font-size:0.75rem;color:var(--good);margin-left:0.3rem;}
+
+  /* ---------- Travel ---------- */
+  .trip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0.9rem;}
+  .trip-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);}
+  .trip-card .who-badge{margin-bottom:0.5rem;}
+  .trip-card h3{font-size:1.05rem;margin-bottom:0.15rem;}
+  .trip-card .dates{font-size:0.82rem;color:var(--ink-soft);margin-bottom:0.5rem;}
+  .trip-card .notes{font-size:0.85rem;color:var(--ink-soft);white-space:pre-wrap;}
+  .trip-card .flights{font-size:0.78rem;color:var(--ink-faint);margin-top:0.5rem;white-space:pre-wrap;}
+  .trip-actions{display:flex;gap:0.5rem;margin-top:0.7rem;}
+  .trip-actions button{font-size:0.78rem;padding:0.25rem 0.6rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);}
+  .trip-card.editing textarea{width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);padding:0.4rem;font-size:0.85rem;margin-top:0.3rem;}
+  .trip-card.editing input{width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);padding:0.4rem;font-size:0.85rem;margin-top:0.3rem;}
+  .trip-card.editing label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-faint);display:block;margin-top:0.5rem;}
+
+  .add-card{border:1px dashed var(--line-strong);border-radius:12px;padding:1rem 1.1rem;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);background:transparent;font-size:0.9rem;min-height:100px;}
+  .add-card:hover{border-color:var(--teal);color:var(--teal);}
+
+  .new-trip-form{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin-top:0.9rem;display:none;}
+  .new-trip-form.open{display:block;}
+  .new-trip-form label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-faint);display:block;margin-top:0.55rem;}
+  .new-trip-form input, .new-trip-form textarea, .new-trip-form select{
+    width:100%;padding:0.5rem 0.6rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);margin-top:0.2rem;font-size:0.88rem;
+  }
+  .form-actions{display:flex;gap:0.6rem;margin-top:0.9rem;}
+  .form-actions button{padding:0.45rem 0.9rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);font-size:0.85rem;}
+  .form-actions button.primary{background:var(--teal);color:var(--paper);border-color:var(--teal);}
+
+  /* ---------- Todos ---------- */
+  .todo-list{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:0.4rem 1.1rem;}
+  .todo-item{display:flex;align-items:baseline;gap:0.6rem;padding:0.7rem 0;border-top:1px solid var(--line);font-size:0.92rem;}
+  .todo-item:first-child{border-top:none;}
+  .todo-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--good);margin-top:0.2rem;flex-shrink:0;}
+  .todo-item label{flex:1;cursor:pointer;}
+  .todo-item label.done{color:var(--ink-faint);text-decoration:line-through;}
+  .todo-item .by{font-size:0.72rem;color:var(--ink-faint);white-space:nowrap;}
+  .todo-item .del{background:none;border:none;color:var(--ink-faint);font-size:0.9rem;line-height:1;padding:0.1rem 0.3rem;}
+  .todo-item .del:hover{color:var(--clay);}
+  .add-todo{display:flex;gap:0.5rem;padding:0.8rem 0 0.5rem;}
+  .add-todo input{flex:1;padding:0.5rem 0.6rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);font-size:0.88rem;}
+  .add-todo button{padding:0.5rem 0.9rem;border:1px solid var(--teal);border-radius:6px;background:var(--teal);color:var(--paper);font-size:0.85rem;}
+
+  footer{color:var(--ink-faint);font-size:0.8rem;text-align:center;margin-top:2.5rem;}
+  .offline-note{font-size:0.78rem;color:var(--ink-faint);text-align:center;margin-top:0.6rem;}
+</style>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="tag">Casa Torres Pavón</div>
+    <h1>Nuestro calendario</h1>
+    <input type="password" id="pw" placeholder="Contraseña" autocomplete="off">
+    <div class="err" id="pwErr"></div>
+    <button class="gate-btn" id="pwBtn">Entrar</button>
+    <div class="who-tiles" id="whoTiles" hidden>
+      <button class="who-tile ale" data-who="ale">Soy Ale</button>
+      <button class="who-tile miguel" data-who="miguel">Soy Mike</button>
+    </div>
+    <div class="gate-sub">Solo para nosotros dos — no es seguridad real, solo para saber quién marcó qué.</div>
+  </div>
+</div>
+
+<div id="app" hidden>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="whoami">Hola, <span class="name" id="whoamiName">—</span> <button class="swap" id="swapWho">cambiar</button></div>
+    <div class="theme-hint">Sept–Oct 2026</div>
+  </div>
+
+  <div class="masthead">
+    <div class="tag">Casa Torres Pavón</div>
+    <h1>Who's on baby duty, when</h1>
+    <p>A living, shared reference for Mount Pisgah drop-off/pick-up, Nala's walk, and our own time — check things off, edit a day, add a trip. Both of us can update it, live.</p>
+  </div>
+
+  <nav class="jump">
+    <a href="#today">Today</a>
+    <a href="#how">How it works</a>
+    <a href="#sept">September</a>
+    <a href="#oct">October</a>
+    <a href="#more">More days</a>
+    <a href="#travel">Travel</a>
+    <a href="#todo">To confirm</a>
+  </nav>
+
+  <section id="today">
+    <h2>Today</h2>
+    <div class="today-card" id="todayCard">
+      <div class="date-big" id="todayDate">—</div>
+      <div id="todayBadgeRow"></div>
+      <div class="today-grid" id="todayGrid"></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How the days work</h2>
+    <div class="sub">Five recurring shapes. Every day below points back to one of these.</div>
+
+    <div class="legend">
+      <span><span class="dot miguel"></span>Miguel on duty</span>
+      <span><span class="dot ale"></span>Ale on duty</span>
+      <span><span class="dot shared"></span>Shared</span>
+      <span><span class="dot flag"></span>Travel / solo — needs attention</span>
+      <span><span class="dot trip"></span>Family trip</span>
+    </div>
+
+    <details class="timeline">
+      <summary>Weekday — on-duty parent <span class="chev">▸</span></summary>
+      <table>
+        <tr><td>6:45am</td><td>Wake baby, dress, breakfast</td><td>On-duty parent</td></tr>
+        <tr><td>7:45am</td><td>Pack daycare backpack</td><td>On-duty parent</td></tr>
+        <tr><td>8:30am</td><td>Drop-off at Mount Pisgah</td><td>On-duty parent</td></tr>
+        <tr><td>5:00pm</td><td>Nala's walk, timed to finish at pick-up</td><td>Off-duty parent</td></tr>
+        <tr><td>5:15pm</td><td>Pick-up</td><td>On-duty parent</td></tr>
+        <tr><td>5:30pm</td><td>Play</td><td>On-duty parent</td></tr>
+        <tr><td>7:30pm</td><td>Bath, then bed</td><td>On-duty parent</td></tr>
+        <tr><td>8:00pm</td><td>Workout — first slot</td><td>On-duty parent</td></tr>
+        <tr><td>8:45pm</td><td>Workout — second slot</td><td>Off-duty parent</td></tr>
+      </table>
+    </details>
+
+    <details class="timeline">
+      <summary>Friday — MBA / split evening <span class="chev">▸</span></summary>
+      <table>
+        <tr><td>6:45am</td><td>Wake, breakfast, backpack, drop-off</td><td>Miguel</td></tr>
+        <tr><td>4:30pm</td><td>Miguel logs off to prep for class</td><td>Miguel</td></tr>
+        <tr><td>5:00pm</td><td>Nala's walk — before pick-up</td><td>Ale</td></tr>
+        <tr><td>5:15pm</td><td>Pick-up, then class starts</td><td>Ale / Miguel in class</td></tr>
+        <tr><td>5:30pm</td><td>Play, bath, bed — solo</td><td>Ale</td></tr>
+      </table>
+    </details>
+
+    <details class="timeline">
+      <summary>Saturday — MBA all day <span class="chev">▸</span></summary>
+      <table>
+        <tr><td>Morning</td><td>Wake, breakfast — home day, no daycare</td><td>Ale</td></tr>
+        <tr><td>Midday</td><td>Nala's walk, whenever it fits</td><td>Ale</td></tr>
+        <tr><td>All day</td><td>Solo parenting + errands</td><td>Ale</td></tr>
+        <tr><td>~7:00pm</td><td>Miguel back, takes bath/bed</td><td>Miguel</td></tr>
+        <tr><td>Evening</td><td>Uninterrupted time for Ale</td><td>Ale</td></tr>
+      </table>
+    </details>
+
+    <details class="timeline">
+      <summary>Sunday — shared / recovery <span class="chev">▸</span></summary>
+      <table>
+        <tr><td>8:00am</td><td>Miguel solo with baby — Ale gets the morning off</td><td>Miguel</td></tr>
+        <tr><td>12:00pm</td><td>Shared family time / outing</td><td>Both</td></tr>
+        <tr><td>5:00pm</td><td>Play, bath, bed</td><td>Both</td></tr>
+        <tr><td>8:00pm</td><td>Relax — alternate who gets first workout slot each week</td><td>Both</td></tr>
+      </table>
+    </details>
+
+    <div class="why-box">
+      <b>Why it's built this way</b>
+      <ul>
+        <li>Thursday is fixed to Miguel because it's Ale's office day — she's never on hook for drop-off/pick-up then.</li>
+        <li>Friday shifts to Ale by 5pm and Saturday goes fully to her because that's when Miguel's MBA classes land — it's a real trade, not a favor.</li>
+        <li>Sunday mornings are Miguel-solo on purpose, so Ale gets one guaranteed lie-in a week to offset the Saturdays.</li>
+        <li>The 8pm/8:45pm workout split alternates who goes first — track it loosely and swap if one of you is short on gym time that week.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="sept">
+    <h2>September</h2>
+    <div class="sub">Backup childcare needed: <b style="color:var(--clay);">Sep 17 morning</b> and <b style="color:var(--clay);">Sep 24</b>, especially the 24th.</div>
+    <div class="stat-strip" id="statSept"></div>
+    <div class="stat-legend" id="statSeptLegend"></div>
+    <div id="daysSept"></div>
+  </section>
+
+  <section id="oct">
+    <h2>October</h2>
+    <div class="callout good"><b>Confirmed:</b> Chile trip Oct 2 (night) – Oct 12 morning, flights verified. Canada trip resolved via calendar to <b>Oct 19–23</b> (on-site client reviews, Toronto/Montreal) — earlier "19–22 vs 22–23" question is settled.</div>
+    <div class="stat-strip" id="statOct"></div>
+    <div class="stat-legend" id="statOctLegend"></div>
+    <div id="daysOct"></div>
+  </section>
+
+  <section id="more">
+    <h2>More days</h2>
+    <div class="sub">Anything outside Sept &amp; Oct — add a day for November, December, or wherever you need one, with its own task list. These can be edited or removed freely.</div>
+    <div id="daysExtra"></div>
+    <div id="extraEmpty" class="empty-tasks" style="margin-top:0.3rem;">No extra days yet.</div>
+    <button class="add-card" id="addDayBtn" style="margin-top:0.9rem;width:100%;">+ Add a day</button>
+    <div class="new-trip-form" id="newDayForm">
+      <label>Date</label>
+      <input type="date" id="ndDate">
+      <label>Day shape</label>
+      <select id="ndType">
+        <option value="weekday">Normal day — full routine</option>
+        <option value="thursday">Thursday-style — fixed to Miguel</option>
+        <option value="friday-split">Friday split — AM Miguel / PM Ale</option>
+        <option value="saturday-solo">Saturday MBA — Ale solo, no daycare</option>
+        <option value="sunday">Sunday — shared</option>
+        <option value="recovery">Recovery day — shared, no daycare</option>
+        <option value="ale-solo">One parent away — solo weekday</option>
+        <option value="flag-backup">Needs backup coverage</option>
+        <option value="light">Light day — jet lag / low key</option>
+        <option value="trip">Family trip — no tasks</option>
+      </select>
+      <label>Who</label>
+      <select id="ndAssigned"><option value="miguel">Miguel</option><option value="ale">Ale</option><option value="shared">Shared</option><option value="split">AM Miguel / PM Ale</option><option value="flag">Needs attention</option><option value="trip">Family trip</option></select>
+      <label>Note</label>
+      <input type="text" id="ndNote" placeholder="Anything worth flagging">
+      <div class="form-actions">
+        <button class="primary" id="ndSave">Save day</button>
+        <button id="ndCancel">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="travel">
+    <h2>Travel</h2>
+    <div class="sub">Every trip on the list — add, edit, or remove as plans firm up. Nov–Dec trips don't have a day-by-day duty split yet.</div>
+    <div class="trip-grid" id="tripGrid"></div>
+    <button class="add-card" id="addTripBtn" style="margin-top:0.9rem;width:100%;">+ Add a trip</button>
+    <div class="new-trip-form" id="newTripForm">
+      <label>Who</label>
+      <select id="ntWho"><option value="miguel">Miguel</option><option value="ale">Ale</option><option value="shared">Ale y Mike</option></select>
+      <label>Title</label>
+      <input type="text" id="ntTitle" placeholder="e.g. Phoenix">
+      <label>Dates</label>
+      <input type="text" id="ntDates" placeholder="e.g. Nov 2–6, 2026">
+      <label>Notes</label>
+      <textarea id="ntNotes" rows="2" placeholder="Anything worth flagging"></textarea>
+      <div class="form-actions">
+        <button class="primary" id="ntSave">Save trip</button>
+        <button id="ntCancel">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="todo">
+    <h2>To confirm, together</h2>
+    <div class="todo-list" id="todoList"></div>
+    <div class="add-todo">
+      <input type="text" id="newTodoText" placeholder="Add something to confirm…">
+      <button id="newTodoBtn">Add</button>
+    </div>
+  </section>
+
+  <footer>
+    Made with love for the Torres Pavón household, September 2026.
+    <div class="offline-note" id="dbStatus"></div>
+  </footer>
+
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PASSWORD = "martin";
+  var TASK_DEFS = {
+    wake: "Wake up, dress, breakfast",
+    pack: "Pack the daycare backpack",
+    dropoff: "Drop-off at Mount Pisgah (~8:30)",
+    nala: "Walk Nala",
+    pickup: "Pick-up (~5:15)",
+    play: "Play time until bath",
+    bath: "Bath + bedtime routine",
+    workoutAle: "Ale — workout / pilates slot",
+    workoutMiguel: "Miguel — workout / gym slot"
+  };
+  var TYPE_TASKS = {
+    "weekday": ["wake","pack","dropoff","nala","pickup","play","bath","workoutAle","workoutMiguel"],
+    "thursday": ["wake","pack","dropoff","nala","pickup","play","bath","workoutAle","workoutMiguel"],
+    "friday-split": ["wake","pack","dropoff","nala","pickup","play","bath"],
+    "saturday-solo": ["wake","nala","play","bath"],
+    "sunday": ["wake","nala","play","bath","workoutAle","workoutMiguel"],
+    "recovery": ["wake","nala","play","bath","workoutAle","workoutMiguel"],
+    "ale-solo": ["wake","pack","dropoff","nala","pickup","play","bath"],
+    "flag-backup": ["wake","pack","dropoff","nala","pickup","play","bath"],
+    "trip": [],
+    "light": ["wake","nala","play","bath"]
+  };
+  var BADGE_LABEL = {
+    miguel: "Miguel on duty", ale: "Ale on duty", shared: "Shared",
+    flag: "Needs attention", trip: "Family trip"
+  };
+  var TYPE_LABELS = {
+    "weekday": "Normal day — full routine",
+    "thursday": "Thursday-style — fixed to Miguel",
+    "friday-split": "Friday split — AM Miguel / PM Ale",
+    "saturday-solo": "Saturday MBA — Ale solo, no daycare",
+    "sunday": "Sunday — shared",
+    "recovery": "Recovery day — shared, no daycare",
+    "ale-solo": "One parent away — solo weekday",
+    "flag-backup": "Needs backup coverage",
+    "light": "Light day — jet lag / low key",
+    "trip": "Family trip — no tasks"
+  };
+
+  function d(date, type, assigned, note, extra){
+    var o = {date: date, type: type, assigned: assigned, note: note || ""};
+    if (extra) for (var k in extra) o[k] = extra[k];
+    return o;
+  }
+
+  var SEPT = [
+    d("2026-09-01","weekday","ale",""),
+    d("2026-09-02","weekday","miguel",""),
+    d("2026-09-03","thursday","miguel","Fixed — her office day"),
+    d("2026-09-04","friday-split","split","GB class: Global Supply Chain, evening"),
+    d("2026-09-05","saturday-solo","ale","GB: Business Regulations + Global Workforce Management, all day"),
+    d("2026-09-06","sunday","shared",""),
+    d("2026-09-07","weekday","miguel",""),
+    d("2026-09-08","weekday","ale",""),
+    d("2026-09-09","weekday","miguel",""),
+    d("2026-09-10","thursday","miguel","Fixed — her office day"),
+    d("2026-09-11","friday-split","split","GB: Capstone + T2M, extended evening"),
+    d("2026-09-12","saturday-solo","ale","GB: Competing Globally + Global Workforce Management, all day"),
+    d("2026-09-13","sunday","shared",""),
+    d("2026-09-14","weekday","ale","Toronto trip week starts"),
+    d("2026-09-15","ale-solo","flag","Miguel flies to Toronto 8:05am — gone before drop-off"),
+    d("2026-09-16","ale-solo","flag","Miguel in Toronto all day"),
+    d("2026-09-17","flag-backup","flag","Ale's office day + Miguel still away for the 8:30 drop-off. Confirmed return flight lands 1:54pm — he can do pick-up himself.", {backupNeeded:true, backupWindow:"Morning drop-off only"}),
+    d("2026-09-18","weekday","miguel","No MBA this week — Miguel takes the full day as a fairness offset"),
+    d("2026-09-19","ale-solo","flag","Miguel's flight to Panama departs 9:51am, lands 12:58pm — MBA residency starts, no regular class this weekend"),
+    d("2026-09-20","ale-solo","flag","Panama residency continues"),
+    d("2026-09-21","ale-solo","flag","Panama residency continues"),
+    d("2026-09-22","ale-solo","flag","Panama residency continues"),
+    d("2026-09-23","ale-solo","flag","Panama residency continues"),
+    d("2026-09-24","flag-backup","flag","Hardest day of the month — her office day, zero Miguel all week.", {backupNeeded:true, backupWindow:"All day"}),
+    d("2026-09-25","ale-solo","flag","Return flight departs Panama 2:23pm, lands Atlanta 7:36pm — home for the tail end at best, plan as a full solo day"),
+    d("2026-09-26","recovery","shared","No MBA this weekend — good day to rebalance"),
+    d("2026-09-27","sunday","shared",""),
+    d("2026-09-28","weekday","miguel",""),
+    d("2026-09-29","weekday","ale",""),
+    d("2026-09-30","weekday","miguel","")
+  ];
+
+  var OCT = [
+    d("2026-10-01","thursday","miguel","Fixed — her office day"),
+    d("2026-10-02","friday-split","split","Normal day, no MBA class — flight to Santiago leaves late, 10:10pm, well after bedtime"),
+    d("2026-10-03","trip","trip","Land Santiago 8:15am — whole family together, framework paused"),
+    d("2026-10-04","trip","trip","Chile — family trip"),
+    d("2026-10-05","trip","trip","Chile — family trip"),
+    d("2026-10-06","trip","trip","Chile — family trip"),
+    d("2026-10-07","trip","trip","Chile — family trip"),
+    d("2026-10-08","trip","trip","Chile — family trip"),
+    d("2026-10-09","trip","trip","Missing GB class: Global Supply Chain — decided, staying for the trip"),
+    d("2026-10-10","trip","trip","Missing GB classes: Competing Globally + Business Regulations — same decision"),
+    d("2026-10-11","trip","trip","Return flight departs Santiago 8:40pm"),
+    d("2026-10-12","light","shared","Land Atlanta 5:20am after an overnight flight — go easy, not a normal duty day"),
+    d("2026-10-13","weekday","ale","Normal rotation resumes"),
+    d("2026-10-14","weekday","miguel",""),
+    d("2026-10-15","thursday","miguel","Fixed — her office day"),
+    d("2026-10-16","friday-split","split","GB: Capstone + T2M, evening"),
+    d("2026-10-17","saturday-solo","ale","GB: Business Regulations + Competing Globally, all day"),
+    d("2026-10-18","sunday","shared",""),
+    d("2026-10-19","ale-solo","flag","Canada on-site trip begins — confirmed via work calendar: on-site client reviews run Oct 19–23 (not just the 22–23 guessed earlier)"),
+    d("2026-10-20","ale-solo","flag","On-site: Sobeys (AM) + Loblaw (PM) reviews, Toronto"),
+    d("2026-10-21","ale-solo","flag","On-site: Enercare review"),
+    d("2026-10-22","flag-backup","flag","On-site: Gardaworld review (Montréal) + her office day — no Miguel all week. Same conflict as Sep 17 / Sep 24.", {backupNeeded:true, backupWindow:"All day"}),
+    d("2026-10-23","ale-solo","flag","On-site continues (AIM review) — Miguel unavailable for drop-off and pick-up"),
+    d("2026-10-24","recovery","shared","Assuming Miguel's back — good day to rebalance"),
+    d("2026-10-25","sunday","shared",""),
+    d("2026-10-26","weekday","miguel",""),
+    d("2026-10-27","weekday","ale",""),
+    d("2026-10-28","weekday","miguel",""),
+    d("2026-10-29","thursday","miguel","Fixed — her office day"),
+    d("2026-10-30","friday-split","split","GB: Global Workforce Management, evening"),
+    d("2026-10-31","saturday-solo","ale","GB: Global Supply Chain, morning — afternoon open")
+  ];
+
+  var TRIP_SEED = [
+    {id:"toronto-sep2026", who:"miguel", title:"Toronto", dates:"Sep 15–17, 2026",
+      notes:"Samsara Summit + renewal work.",
+      flights:"Dep ATL Sep 15, 8:05am (DL2957) → arr YYZ 10:23am\nReturn: dep YYZ Sep 17, 11:38am (DL2835) → arr ATL 1:54pm"},
+    {id:"panama-sep2026", who:"miguel", title:"MBA Panama residency", dates:"Sep 19–25, 2026",
+      notes:"GB in-person residency module, Panama City. Intensive format — no regular Fri/Sat class this weekend.",
+      flights:"Dep ATL Sep 19, 9:51am → arr Panama City 12:58pm\nReturn: dep Panama Sep 25, 2:23pm → arr ATL 7:36pm"},
+    {id:"chile-oct2026", who:"shared", title:"Chile (con Martin)", dates:"Oct 2 (night) – Oct 12, 2026",
+      notes:"Family trip to Santiago. Whole family together — framework paused. Miguel skips Oct 9–10 MBA classes for this.",
+      flights:"Dep ATL Oct 2, 10:10pm → arr Santiago Oct 3, 8:15am\nReturn: dep Santiago Oct 11, 8:40pm → arr ATL Oct 12, 5:20am"},
+    {id:"canada-oct2026", who:"miguel", title:"Canada renewal on-site", dates:"Oct 19–23, 2026",
+      notes:"Confirmed via work calendar: on-site client reviews in Toronto/Montreal (Sobeys, Loblaw, Enercare, Gardaworld, AIM).",
+      flights:""},
+    {id:"phoenix-nov2026", who:"miguel", title:"Phoenix", dates:"Nov 2–6, 2026",
+      notes:"Details TBD — no day-by-day duty split yet.", flights:""},
+    {id:"loscabos-nov2026", who:"miguel", title:"Los Cabos", dates:"Nov 12–15, 2026",
+      notes:"Details TBD.", flights:""},
+    {id:"brazil-dec2026", who:"ale", title:"Brazil", dates:"~Dec 1, 2026 (TBD)",
+      notes:"Dates still approximate.", flights:""},
+    {id:"osos-dec2026", who:"shared", title:"Osos (family visit)", dates:"Dec 12, 2026 – Jan 4, 2027",
+      notes:"Family/friend visit over the holidays.", flights:""},
+    {id:"dearis-dec2026", who:"shared", title:"Dearis (family visit)", dates:"Dec 20, 2026 – Jan 10, 2027",
+      notes:"Family/friend visit over the holidays.", flights:""}
+  ];
+
+  var TODO_SEED = [
+    {id:"todo-mba-notice", text:"Notify the MBA program Miguel will miss Oct 9–10 classes (Global Supply Chain, Competing Globally, Business Regulations) — line up notes / makeup work.", done:false},
+    {id:"todo-canada-dates", text:"Canada trip dates — RESOLVED: work calendar confirms on-site Oct 19–23 (earlier guess of the 19–22 window was off by a day on each end).", done:true},
+    {id:"todo-nala-boarding", text:"Arrange Nala's boarding or pet-sitting for Oct 2 evening through Oct 12 morning (Chile trip).", done:false},
+    {id:"todo-backup-childcare", text:"Line up backup childcare: Sep 17 morning, Sep 24 (all day), Oct 22 (all day) and possibly Oct 23.", done:false},
+    {id:"todo-nov-flights", text:"Confirm exact flight times for Phoenix (Nov 2–6) and Los Cabos (Nov 12–15) once booked, so we can slot pick-up coverage.", done:false}
+  ];
+
+  // ---------------- state ----------------
+  var profile = null; // 'ale' | 'miguel'
+  var db = null;
+  var daysData = {};   // date -> doc data
+  var tripsData = {};  // id -> doc data
+  var todosData = {};  // id -> doc data
+  var openDay = null;
+
+  function esc(s){
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  // ---------------- gate ----------------
+  var gateEl = document.getElementById("gate");
+  var appEl = document.getElementById("app");
+  var pwInput = document.getElementById("pw");
+  var pwErr = document.getElementById("pwErr");
+  var whoTiles = document.getElementById("whoTiles");
+
+  function tryStoredAuth(){
+    try{
+      var unlocked = localStorage.getItem("ct_unlocked") === "1";
+      var who = localStorage.getItem("ct_profile");
+      if (unlocked && (who === "ale" || who === "miguel")){
+        enterApp(who);
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  document.getElementById("pwBtn").addEventListener("click", function(){
+    if (pwInput.value === PASSWORD){
+      pwErr.textContent = "";
+      try{ localStorage.setItem("ct_unlocked","1"); }catch(e){}
+      whoTiles.hidden = false;
+      pwInput.disabled = true;
+      document.getElementById("pwBtn").disabled = true;
+    } else {
+      pwErr.textContent = "Not quite — try again.";
+    }
+  });
+  pwInput.addEventListener("keydown", function(e){
+    if (e.key === "Enter") document.getElementById("pwBtn").click();
+  });
+  whoTiles.addEventListener("click", function(e){
+    var btn = e.target.closest(".who-tile");
+    if (!btn) return;
+    var who = btn.getAttribute("data-who");
+    try{ localStorage.setItem("ct_profile", who); }catch(e){}
+    enterApp(who);
+  });
+  document.getElementById("swapWho").addEventListener("click", function(){
+    try{ localStorage.removeItem("ct_profile"); localStorage.removeItem("ct_unlocked"); }catch(e){}
+    location.reload();
+  });
+
+  function enterApp(who){
+    profile = who;
+    gateEl.hidden = true;
+    appEl.hidden = false;
+    document.getElementById("whoamiName").textContent = who === "ale" ? "Ale" : "Mike";
+    initDb();
+  }
+
+  tryStoredAuth();
+
+  // ---------------- db ----------------
+  function initDb(){
+    if (!window.claude || !window.claude.use){
+      document.getElementById("dbStatus").textContent = "Running without live sync in this preview.";
+      daysData = seedDaysLocal();
+      tripsData = seedTripsLocal();
+      todosData = seedTodosLocal();
+      renderAll();
+      return;
+    }
+    window.claude.use("db").then(function(dbNs){
+      if (!dbNs){
+        document.getElementById("dbStatus").textContent = "Live sync unavailable — showing local copy only.";
+        daysData = seedDaysLocal();
+        tripsData = seedTripsLocal();
+        todosData = seedTodosLocal();
+        renderAll();
+        return;
+      }
+      db = dbNs;
+      subscribeAll();
+    }).catch(function(){
+      document.getElementById("dbStatus").textContent = "Live sync unavailable — showing local copy only.";
+      daysData = seedDaysLocal();
+      tripsData = seedTripsLocal();
+      todosData = seedTodosLocal();
+      renderAll();
+    });
+  }
+
+  function seedDaysLocal(){
+    var out = {};
+    SEPT.concat(OCT).forEach(function(day){
+      out[day.date] = buildDayDoc(day);
+    });
+    return out;
+  }
+  function seedTripsLocal(){
+    var out = {};
+    TRIP_SEED.forEach(function(t){ out[t.id] = t; });
+    return out;
+  }
+  function seedTodosLocal(){
+    var out = {};
+    TODO_SEED.forEach(function(t){ out[t.id] = t; });
+    return out;
+  }
+
+  function buildDayDoc(day){
+    var tasks = {}, taskBy = {};
+    (TYPE_TASKS[day.type] || []).forEach(function(k){ tasks[k] = false; taskBy[k] = ""; });
+    var body = {
+      type: day.type, assigned: day.assigned, note: day.note || "",
+      tasks: tasks, taskBy: taskBy, customTasks: {}
+    };
+    if (day.backupNeeded) body.backupNeeded = true;
+    if (day.backupWindow) body.backupWindow = day.backupWindow;
+    if (day.extra) body.extra = true;
+    return body;
+  }
+
+  function rebuildTasksForType(data, newType){
+    var oldTasks = data.tasks || {}, oldBy = data.taskBy || {};
+    var tasks = {}, taskBy = {};
+    (TYPE_TASKS[newType] || []).forEach(function(k){
+      tasks[k] = !!oldTasks[k];
+      taskBy[k] = oldBy[k] || "";
+    });
+    // keep any custom task state (custom ids never collide with fixed keys)
+    Object.keys(data.customTasks || {}).forEach(function(k){
+      tasks[k] = !!oldTasks[k];
+      taskBy[k] = oldBy[k] || "";
+    });
+    return {tasks: tasks, taskBy: taskBy};
+  }
+
+  var subs = [];
+  function subscribeAll(){
+    var seenDays = false, seenTrips = false, seenTodos = false;
+
+    subs.push(db.collection("days").onSnapshot(function(snap){
+      if (!seenDays && snap.empty){
+        seedRemote();
+      }
+      seenDays = true;
+      snap.docs.forEach(function(doc){ daysData[doc.id] = doc.data(); });
+      renderDays();
+      renderToday();
+    }, function(){ }));
+
+    subs.push(db.collection("trips").onSnapshot(function(snap){
+      seenTrips = true;
+      var ids = {};
+      snap.docs.forEach(function(doc){ tripsData[doc.id] = doc.data(); ids[doc.id]=true; });
+      Object.keys(tripsData).forEach(function(id){ if(!ids[id]) delete tripsData[id]; });
+      renderTrips();
+    }, function(){ }));
+
+    subs.push(db.collection("todos").onSnapshot(function(snap){
+      seenTodos = true;
+      var ids = {};
+      snap.docs.forEach(function(doc){ todosData[doc.id] = doc.data(); ids[doc.id]=true; });
+      Object.keys(todosData).forEach(function(id){ if(!ids[id]) delete todosData[id]; });
+      renderTodos();
+    }, function(){ }));
+
+    // fallback seed check for trips/todos independently (idempotent ids)
+    setTimeout(function(){
+      db.collection("trips").limit(1).get().then(function(s){
+        if (s.empty) TRIP_SEED.forEach(function(t){ db.doc("trips/"+t.id).set(t).catch(function(){}); });
+      }).catch(function(){});
+      db.collection("todos").limit(1).get().then(function(s){
+        if (s.empty) TODO_SEED.forEach(function(t){ db.doc("todos/"+t.id).set(t).catch(function(){}); });
+      }).catch(function(){});
+    }, 1200);
+  }
+
+  function seedRemote(){
+    SEPT.concat(OCT).forEach(function(day){
+      db.doc("days/"+day.date).set(buildDayDoc(day)).catch(function(){});
+    });
+  }
+
+  function renderAll(){ renderToday(); renderDays(); renderTrips(); renderTodos(); }
+
+  // ---------------- today ----------------
+  function todayKey(){
+    var f = new Intl.DateTimeFormat("en-CA", {timeZone:"America/New_York", year:"numeric", month:"2-digit", day:"2-digit"});
+    return f.format(new Date()); // en-CA gives YYYY-MM-DD
+  }
+  function fmtDate(key){
+    var parts = key.split("-").map(Number);
+    var dt = new Date(parts[0], parts[1]-1, parts[2]);
+    return dt.toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric"});
+  }
+  function dowShort(key){
+    var parts = key.split("-").map(Number);
+    var dt = new Date(parts[0], parts[1]-1, parts[2]);
+    return dt.toLocaleDateString("en-US", {weekday:"short"});
+  }
+
+  function renderToday(){
+    var key = todayKey();
+    document.getElementById("todayDate").textContent = fmtDate(key);
+    var day = daysData[key];
+    var badgeRow = document.getElementById("todayBadgeRow");
+    var grid = document.getElementById("todayGrid");
+    badgeRow.innerHTML = "";
+    grid.innerHTML = "";
+    if (!day){
+      badgeRow.innerHTML = '<span class="badge shared">Outside the Sept–Oct plan</span>';
+      return;
+    }
+    badgeRow.appendChild(makeBadge(day.assigned));
+    if (day.note){
+      var n = document.createElement("div");
+      n.className = "day-row-note";
+      n.style.marginTop = "0.5rem";
+      n.style.fontSize = "0.88rem";
+      n.style.color = "var(--ink-soft)";
+      n.textContent = day.note;
+      badgeRow.appendChild(n);
+    }
+    var stats = [
+      {k:"Drop-off", v: day.type === "trip" ? "—" : "~8:30am"},
+      {k:"Pick-up", v: day.type === "trip" ? "—" : (TYPE_TASKS[day.type]||[]).indexOf("pickup")>=0 ? "~5:15pm" : "no daycare"},
+      {k:"Nala", v: (TYPE_TASKS[day.type]||[]).indexOf("nala")>=0 ? "walk today" : "—"},
+      {k:"Backup needed", v: day.backupNeeded ? (day.backupWindow || "yes") : "no"}
+    ];
+    stats.forEach(function(s){
+      var el = document.createElement("div");
+      el.className = "today-stat";
+      el.innerHTML = '<div class="k"></div><div class="v"></div>';
+      el.querySelector(".k").textContent = s.k;
+      el.querySelector(".v").textContent = s.v;
+      grid.appendChild(el);
+    });
+  }
+
+  function makeBadge(assigned){
+    var span = document.createElement("span");
+    var cls = assigned === "split" ? "shared" : assigned;
+    span.className = "badge " + (BADGE_LABEL[cls] ? cls : "shared");
+    span.textContent = assigned === "split" ? "AM Miguel / PM Ale" : (BADGE_LABEL[assigned] || assigned);
+    return span;
+  }
+
+  // ---------------- days list ----------------
+  function weekLabelFor(dateKey){
+    var parts = dateKey.split("-").map(Number);
+    var dt = new Date(parts[0], parts[1]-1, parts[2]);
+    var dow = dt.getDay(); // 0 sun
+    var monday = new Date(dt);
+    monday.setDate(dt.getDate() - ((dow+6)%7));
+    return monday.toLocaleDateString("en-US", {month:"short", day:"numeric"});
+  }
+
+  function renderDays(){
+    renderMonth(SEPT, "daysSept", "statSept", "statSeptLegend");
+    renderMonth(OCT, "daysOct", "statOct", "statOctLegend");
+    renderExtraDays();
+  }
+
+  function renderExtraDays(){
+    var container = document.getElementById("daysExtra");
+    var emptyMsg = document.getElementById("extraEmpty");
+    container.innerHTML = "";
+    var keys = Object.keys(daysData).filter(function(k){ return daysData[k] && daysData[k].extra; }).sort();
+    emptyMsg.style.display = keys.length ? "none" : "block";
+    keys.forEach(function(key){
+      container.appendChild(renderDay(key, daysData[key]));
+    });
+  }
+
+  function renderMonth(list, containerId, statId, legendId){
+    var container = document.getElementById(containerId);
+    container.innerHTML = "";
+    var lastWeek = null;
+    var counts = {miguel:0, ale:0, shared:0, flag:0, trip:0};
+
+    list.forEach(function(seedDay){
+      var data = daysData[seedDay.date] || buildDayDoc(seedDay);
+      var assignedForCount = data.assigned === "split" ? "shared" : data.assigned;
+      if (counts[assignedForCount] !== undefined) counts[assignedForCount]++;
+
+      var wl = weekLabelFor(seedDay.date);
+      if (wl !== lastWeek){
+        var wlEl = document.createElement("div");
+        wlEl.className = "week-label";
+        wlEl.textContent = "Week of " + wl;
+        container.appendChild(wlEl);
+        lastWeek = wl;
+      }
+
+      container.appendChild(renderDay(seedDay.date, data));
+    });
+
+    renderStatStrip(statId, legendId, counts);
+  }
+
+  var STAT_COLORS = {miguel:"var(--teal)", ale:"var(--ochre)", shared:"var(--ink-faint)", flag:"var(--clay)", trip:"var(--trip)"};
+  var STAT_LABELS = {miguel:"Miguel", ale:"Ale", shared:"Shared", flag:"Needs attention", trip:"Family trip"};
+  function renderStatStrip(statId, legendId, counts){
+    var total = 0;
+    Object.keys(counts).forEach(function(k){ total += counts[k]; });
+    var strip = document.getElementById(statId);
+    var legend = document.getElementById(legendId);
+    strip.innerHTML = ""; legend.innerHTML = "";
+    Object.keys(counts).forEach(function(k){
+      if (!counts[k]) return;
+      var seg = document.createElement("span");
+      seg.style.background = STAT_COLORS[k];
+      seg.style.width = (counts[k]/total*100) + "%";
+      strip.appendChild(seg);
+      var leg = document.createElement("span");
+      leg.innerHTML = '<b></b> ' + STAT_LABELS[k] + " days";
+      leg.querySelector("b").textContent = counts[k];
+      legend.appendChild(leg);
+    });
+  }
+
+  function renderDay(dateKey, data){
+    var wrap = document.createElement("div");
+    wrap.className = "day" + (dateKey === todayKey() ? " is-today" : "") + (openDay === dateKey ? " open" : "");
+    wrap.setAttribute("data-date", dateKey);
+
+    var row = document.createElement("div");
+    row.className = "day-row";
+    var dnum = dateKey.split("-")[2].replace(/^0/,"");
+    row.innerHTML =
+      '<div class="date">' + dnum + '<span class="dow"></span></div>' +
+      '<div class="who"></div>' +
+      '<div class="expand-hint">edit ▾</div>';
+    row.querySelector(".dow").textContent = dowShort(dateKey);
+    row.querySelector(".who").appendChild(makeBadge(data.assigned));
+    if (data.note){
+      var noteEl = document.createElement("div");
+      noteEl.className = "note";
+      noteEl.textContent = data.note;
+      row.appendChild(noteEl);
+    }
+    row.addEventListener("click", function(){
+      openDay = (openDay === dateKey) ? null : dateKey;
+      renderDays();
+    });
+    wrap.appendChild(row);
+
+    var detail = document.createElement("div");
+    detail.className = "day-detail";
+    wrap.appendChild(detail);
+
+    if (openDay === dateKey){
+      buildDayDetail(detail, dateKey, data);
+    }
+
+    return wrap;
+  }
+
+  function buildDayDetail(detail, dateKey, data){
+    if (data.backupNeeded){
+      var bf = document.createElement("div");
+      bf.className = "backup-flag";
+      bf.textContent = "⚑ Backup needed — " + (data.backupWindow || "");
+      detail.appendChild(bf);
+    }
+
+    var fixedKeys = (TYPE_TASKS[data.type] || []).slice();
+    var customKeys = Object.keys(data.customTasks || {});
+    var taskKeys = fixedKeys.concat(customKeys);
+    if (!taskKeys.length){
+      var empty = document.createElement("div");
+      empty.className = "empty-tasks";
+      empty.textContent = "No daily tasks tracked for this day — framework paused (trip / light day).";
+      detail.appendChild(empty);
+    } else {
+      var tl = document.createElement("div");
+      tl.className = "tasklist";
+      taskKeys.forEach(function(key){
+        var isCustom = customKeys.indexOf(key) >= 0;
+        var checked = !!(data.tasks && data.tasks[key]);
+        var by = (data.taskBy && data.taskBy[key]) || "";
+        var row = document.createElement("div");
+        row.className = "task";
+        var id = "t-" + dateKey + "-" + key;
+        row.innerHTML =
+          '<input type="checkbox" id="' + id + '">' +
+          '<label for="' + id + '"></label>' +
+          '<span class="by"></span>';
+        var cb = row.querySelector("input");
+        cb.checked = checked;
+        var lbl = row.querySelector("label");
+        lbl.textContent = isCustom ? data.customTasks[key] : (TASK_DEFS[key] || key);
+        if (checked) lbl.classList.add("done");
+        row.querySelector(".by").textContent = checked && by ? ("✓ " + (by === "ale" ? "Ale" : "Mike")) : "";
+        cb.addEventListener("change", function(){
+          toggleTask(dateKey, key, cb.checked);
+        });
+        if (isCustom){
+          var del = document.createElement("button");
+          del.className = "del";
+          del.textContent = "✕";
+          del.style.background = "none";
+          del.style.border = "none";
+          del.style.color = "var(--ink-faint)";
+          del.style.cursor = "pointer";
+          del.addEventListener("click", function(){ deleteCustomTask(dateKey, key); });
+          row.appendChild(del);
+        }
+        tl.appendChild(row);
+      });
+      detail.appendChild(tl);
+    }
+
+    var addTaskRow = document.createElement("div");
+    addTaskRow.style.display = "flex";
+    addTaskRow.style.gap = "0.5rem";
+    addTaskRow.style.marginBottom = "0.8rem";
+    addTaskRow.innerHTML =
+      '<input type="text" placeholder="Add a task for this day…" style="flex:1;padding:0.4rem 0.55rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);color:var(--ink);font-size:0.85rem;">' +
+      '<button style="padding:0.4rem 0.8rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper-raised);font-size:0.82rem;">Add</button>';
+    var addTaskInput = addTaskRow.querySelector("input");
+    addTaskRow.querySelector("button").addEventListener("click", function(){
+      var text = addTaskInput.value.trim();
+      if (!text) return;
+      addCustomTask(dateKey, text);
+      addTaskInput.value = "";
+    });
+    addTaskInput.addEventListener("keydown", function(e){
+      if (e.key === "Enter") addTaskRow.querySelector("button").click();
+    });
+    detail.appendChild(addTaskRow);
+
+    var editRow = document.createElement("div");
+    editRow.className = "edit-row";
+    editRow.innerHTML =
+      '<select id="edit-type-' + dateKey + '">' +
+        Object.keys(TYPE_LABELS).map(function(v){
+          return '<option value="'+v+'">'+ TYPE_LABELS[v] +'</option>';
+        }).join('') +
+      '</select>' +
+      '<select id="edit-assign-' + dateKey + '">' +
+        ['miguel','ale','shared','split','flag','trip'].map(function(v){
+          return '<option value="'+v+'">'+ (v==='split' ? 'AM Miguel / PM Ale' : (BADGE_LABEL[v] || v)) +'</option>';
+        }).join('') +
+      '</select>' +
+      '<input type="text" id="edit-note-' + dateKey + '" placeholder="Note for this day">' +
+      '<button class="primary" id="edit-save-' + dateKey + '">Save</button>' +
+      '<span class="saved-hint" id="edit-saved-' + dateKey + '"></span>';
+    detail.appendChild(editRow);
+    editRow.querySelector("#edit-type-"+dateKey).value = data.type;
+    editRow.querySelector("#edit-assign-"+dateKey).value = data.assigned;
+    editRow.querySelector("#edit-note-"+dateKey).value = data.note || "";
+    editRow.querySelector("button").addEventListener("click", function(){
+      var newType = editRow.querySelector("#edit-type-"+dateKey).value;
+      var newAssigned = editRow.querySelector("#edit-assign-"+dateKey).value;
+      var newNote = editRow.querySelector("#edit-note-"+dateKey).value;
+      saveDayEdit(dateKey, newType, newAssigned, newNote);
+      var hint = editRow.querySelector(".saved-hint");
+      hint.textContent = "Saved";
+      setTimeout(function(){ hint.textContent = ""; }, 1500);
+    });
+
+    if (data.extra){
+      var delDayBtn = document.createElement("button");
+      delDayBtn.textContent = "Remove this day";
+      delDayBtn.style.marginTop = "0.7rem";
+      delDayBtn.style.padding = "0.4rem 0.8rem";
+      delDayBtn.style.border = "1px solid var(--clay)";
+      delDayBtn.style.borderRadius = "6px";
+      delDayBtn.style.background = "var(--paper-raised)";
+      delDayBtn.style.color = "var(--clay)";
+      delDayBtn.style.fontSize = "0.82rem";
+      delDayBtn.addEventListener("click", function(){
+        if (!confirm("Remove " + dateKey + "?")) return;
+        deleteDay(dateKey);
+      });
+      detail.appendChild(delDayBtn);
+    }
+  }
+
+  function toggleTask(dateKey, key, checked){
+    var data = daysData[dateKey];
+    if (!data) return;
+    data.tasks = data.tasks || {};
+    data.taskBy = data.taskBy || {};
+    data.tasks[key] = checked;
+    data.taskBy[key] = checked ? profile : "";
+    if (db){
+      var patchTasks = {}, patchBy = {};
+      patchTasks[key] = checked;
+      patchBy[key] = checked ? profile : "";
+      db.doc("days/"+dateKey).update({tasks: patchTasks, taskBy: patchBy}).catch(function(){});
+    }
+    renderDays();
+  }
+
+  function addCustomTask(dateKey, text){
+    var data = daysData[dateKey];
+    if (!data) return;
+    var key = "custom-" + Date.now();
+    data.customTasks = data.customTasks || {};
+    data.tasks = data.tasks || {};
+    data.taskBy = data.taskBy || {};
+    data.customTasks[key] = text;
+    data.tasks[key] = false;
+    data.taskBy[key] = "";
+    if (db){
+      var patchCustom = {}, patchTasks = {}, patchBy = {};
+      patchCustom[key] = text; patchTasks[key] = false; patchBy[key] = "";
+      db.doc("days/"+dateKey).update({customTasks: patchCustom, tasks: patchTasks, taskBy: patchBy}).catch(function(){});
+    }
+    renderDays();
+  }
+
+  function deleteCustomTask(dateKey, key){
+    var data = daysData[dateKey];
+    if (!data) return;
+    delete data.customTasks[key];
+    delete data.tasks[key];
+    delete data.taskBy[key];
+    if (db) db.doc("days/"+dateKey).set(data).catch(function(){});
+    renderDays();
+  }
+
+  function saveDayEdit(dateKey, type, assigned, note){
+    var data = daysData[dateKey] || {tasks:{}, taskBy:{}, customTasks:{}};
+    var typeChanged = data.type !== type;
+    data.type = type;
+    data.assigned = assigned;
+    data.note = note;
+    if (typeChanged){
+      var rebuilt = rebuildTasksForType(data, type);
+      data.tasks = rebuilt.tasks;
+      data.taskBy = rebuilt.taskBy;
+    }
+    daysData[dateKey] = data;
+    if (db){
+      db.doc("days/"+dateKey).set(data).catch(function(){});
+    }
+    renderDays();
+    renderToday();
+  }
+
+  function deleteDay(dateKey){
+    delete daysData[dateKey];
+    if (openDay === dateKey) openDay = null;
+    if (db) db.doc("days/"+dateKey).delete().catch(function(){});
+    renderDays();
+    renderToday();
+  }
+
+  // ---------------- trips ----------------
+  function renderTrips(){
+    var grid = document.getElementById("tripGrid");
+    grid.innerHTML = "";
+    var order = TRIP_SEED.map(function(t){return t.id;});
+    var extraIds = Object.keys(tripsData).filter(function(id){ return order.indexOf(id) === -1; });
+    order.concat(extraIds).forEach(function(id){
+      var t = tripsData[id];
+      if (!t) return;
+      grid.appendChild(renderTripCard(id, t));
+    });
+  }
+
+  function renderTripCard(id, t){
+    var card = document.createElement("div");
+    card.className = "trip-card";
+    var badge = makeBadge(t.who === "shared" ? "shared" : t.who);
+    if (t.who === "shared"){ badge.textContent = "Ale y Mike"; }
+    var body = document.createElement("div");
+    body.appendChild(badge);
+    var h3 = document.createElement("h3"); h3.textContent = t.title || "Untitled trip";
+    var dates = document.createElement("div"); dates.className = "dates"; dates.textContent = t.dates || "";
+    var notes = document.createElement("div"); notes.className = "notes"; notes.textContent = t.notes || "";
+    body.appendChild(h3); body.appendChild(dates); body.appendChild(notes);
+    if (t.flights){
+      var fl = document.createElement("div"); fl.className = "flights"; fl.textContent = t.flights;
+      body.appendChild(fl);
+    }
+    var actions = document.createElement("div"); actions.className = "trip-actions";
+    var editBtn = document.createElement("button"); editBtn.textContent = "Edit";
+    var delBtn = document.createElement("button"); delBtn.textContent = "Delete";
+    actions.appendChild(editBtn); actions.appendChild(delBtn);
+    body.appendChild(actions);
+    card.appendChild(body);
+
+    editBtn.addEventListener("click", function(){
+      openTripEditor(card, id, t);
+    });
+    delBtn.addEventListener("click", function(){
+      if (!confirm('Delete "' + (t.title||"this trip") + '"?')) return;
+      delete tripsData[id];
+      if (db) db.doc("trips/"+id).delete().catch(function(){});
+      renderTrips();
+    });
+    return card;
+  }
+
+  function openTripEditor(card, id, t){
+    card.classList.add("editing");
+    card.innerHTML = "";
+    var who = document.createElement("select");
+    ["miguel","ale","shared"].forEach(function(v){
+      var o = document.createElement("option"); o.value = v;
+      o.textContent = v === "shared" ? "Ale y Mike" : (v === "ale" ? "Ale" : "Miguel");
+      if (v === t.who) o.selected = true;
+      who.appendChild(o);
+    });
+    var title = document.createElement("input"); title.value = t.title || "";
+    var dates = document.createElement("input"); dates.value = t.dates || "";
+    var notes = document.createElement("textarea"); notes.rows = 2; notes.value = t.notes || "";
+    var flights = document.createElement("textarea"); flights.rows = 2; flights.value = t.flights || "";
+    [["Who", who], ["Title", title], ["Dates", dates], ["Notes", notes], ["Flight info", flights]].forEach(function(pair){
+      var l = document.createElement("label"); l.textContent = pair[0];
+      card.appendChild(l); card.appendChild(pair[1]);
+    });
+    var actions = document.createElement("div"); actions.className = "trip-actions"; actions.style.marginTop="0.6rem";
+    var save = document.createElement("button"); save.textContent = "Save";
+    var cancel = document.createElement("button"); cancel.textContent = "Cancel";
+    actions.appendChild(save); actions.appendChild(cancel);
+    card.appendChild(actions);
+
+    save.addEventListener("click", function(){
+      var updated = {who: who.value, title: title.value, dates: dates.value, notes: notes.value, flights: flights.value};
+      tripsData[id] = updated;
+      if (db) db.doc("trips/"+id).set(updated).catch(function(){});
+      renderTrips();
+    });
+    cancel.addEventListener("click", renderTrips);
+  }
+
+  document.getElementById("addTripBtn").addEventListener("click", function(){
+    document.getElementById("newTripForm").classList.add("open");
+  });
+  document.getElementById("ntCancel").addEventListener("click", function(){
+    document.getElementById("newTripForm").classList.remove("open");
+  });
+  document.getElementById("ntSave").addEventListener("click", function(){
+    var title = document.getElementById("ntTitle").value.trim();
+    if (!title) { document.getElementById("ntTitle").focus(); return; }
+    var id = "trip-" + Date.now();
+    var t = {
+      who: document.getElementById("ntWho").value,
+      title: title,
+      dates: document.getElementById("ntDates").value.trim(),
+      notes: document.getElementById("ntNotes").value.trim(),
+      flights: ""
+    };
+    tripsData[id] = t;
+    if (db) db.doc("trips/"+id).set(t).catch(function(){});
+    document.getElementById("ntTitle").value = "";
+    document.getElementById("ntDates").value = "";
+    document.getElementById("ntNotes").value = "";
+    document.getElementById("newTripForm").classList.remove("open");
+    renderTrips();
+  });
+
+  // ---------------- add a day ----------------
+  document.getElementById("addDayBtn").addEventListener("click", function(){
+    document.getElementById("newDayForm").classList.add("open");
+  });
+  document.getElementById("ndCancel").addEventListener("click", function(){
+    document.getElementById("newDayForm").classList.remove("open");
+  });
+  document.getElementById("ndSave").addEventListener("click", function(){
+    var dateVal = document.getElementById("ndDate").value;
+    if (!dateVal){ document.getElementById("ndDate").focus(); return; }
+    if (daysData[dateVal] && !confirm("A day already exists for " + dateVal + " — overwrite it?")) return;
+    var day = {
+      type: document.getElementById("ndType").value,
+      assigned: document.getElementById("ndAssigned").value,
+      note: document.getElementById("ndNote").value.trim(),
+      extra: true
+    };
+    var doc = buildDayDoc(day);
+    daysData[dateVal] = doc;
+    if (db) db.doc("days/"+dateVal).set(doc).catch(function(){});
+    document.getElementById("ndDate").value = "";
+    document.getElementById("ndNote").value = "";
+    document.getElementById("newDayForm").classList.remove("open");
+    renderDays();
+    renderToday();
+  });
+
+  // ---------------- todos ----------------
+  function renderTodos(){
+    var list = document.getElementById("todoList");
+    list.innerHTML = "";
+    var order = TODO_SEED.map(function(t){return t.id;});
+    var extraIds = Object.keys(todosData).filter(function(id){ return order.indexOf(id) === -1; });
+    order.concat(extraIds).forEach(function(id){
+      var t = todosData[id];
+      if (!t) return;
+      var row = document.createElement("div");
+      row.className = "todo-item";
+      var cbId = "todo-cb-" + id;
+      row.innerHTML =
+        '<input type="checkbox" id="' + cbId + '">' +
+        '<label for="' + cbId + '"></label>' +
+        '<span class="by"></span>' +
+        '<button class="del">✕</button>';
+      var cb = row.querySelector("input");
+      cb.checked = !!t.done;
+      var lbl = row.querySelector("label");
+      lbl.textContent = t.text || "";
+      if (t.done) lbl.classList.add("done");
+      row.querySelector(".by").textContent = t.done && t.doneBy ? ("✓ " + (t.doneBy === "ale" ? "Ale" : "Mike")) : "";
+      cb.addEventListener("change", function(){
+        t.done = cb.checked;
+        t.doneBy = cb.checked ? profile : "";
+        if (db) db.doc("todos/"+id).update({done: t.done, doneBy: t.doneBy}).catch(function(){
+          db.doc("todos/"+id).set(t).catch(function(){});
+        });
+        renderTodos();
+      });
+      row.querySelector(".del").addEventListener("click", function(){
+        delete todosData[id];
+        if (db) db.doc("todos/"+id).delete().catch(function(){});
+        renderTodos();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById("newTodoBtn").addEventListener("click", addTodo);
+  document.getElementById("newTodoText").addEventListener("keydown", function(e){
+    if (e.key === "Enter") addTodo();
+  });
+  function addTodo(){
+    var input = document.getElementById("newTodoText");
+    var text = input.value.trim();
+    if (!text) return;
+    var id = "todo-" + Date.now();
+    var t = {text: text, done: false, doneBy: ""};
+    todosData[id] = t;
+    if (db) db.doc("todos/"+id).set(t).catch(function(){});
+    input.value = "";
+    renderTodos();
+  }
+
+})();
+</script>
