@@ -480,11 +480,14 @@
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function(){
   "use strict";
 
   var PASSWORD = "martin";
+  var SUPABASE_URL = "__SUPABASE_URL__";
+  var SUPABASE_KEY = "__SUPABASE_KEY__";
   var TASK_DEFS = {
     wake: "Wake up, dress, breakfast",
     pack: "Pack the daycare backpack",
@@ -700,34 +703,141 @@
 
   tryStoredAuth();
 
+  // ---------------- db (Supabase-backed) ----------------
+  // Thin shim over supabase-js giving the same tiny interface the rest of
+  // this file uses: db.collection(name).onSnapshot(next, err) / .limit(n).get(),
+  // db.doc("collection/id").set(data) / .update(patch) / .delete().
+  function idColumn(collection){ return collection === "days" ? "date" : "id"; }
+
+  function rowToDoc(collection, row){
+    if (collection === "days"){
+      return {
+        type: row.type, assigned: row.assigned, note: row.note || "",
+        tasks: row.tasks || {}, taskBy: row.task_by || {}, customTasks: row.custom_tasks || {},
+        backupNeeded: !!row.backup_needed, backupWindow: row.backup_window || "", extra: !!row.extra
+      };
+    }
+    if (collection === "todos"){
+      return {text: row.text, done: !!row.done, doneBy: row.done_by || ""};
+    }
+    return {who: row.who, title: row.title, dates: row.dates || "", notes: row.notes || "", flights: row.flights || ""};
+  }
+  function docToRow(collection, id, data){
+    if (collection === "days"){
+      return {
+        date: id, type: data.type, assigned: data.assigned, note: data.note || "",
+        tasks: data.tasks || {}, task_by: data.taskBy || {}, custom_tasks: data.customTasks || {},
+        backup_needed: !!data.backupNeeded, backup_window: data.backupWindow || "", extra: !!data.extra
+      };
+    }
+    if (collection === "todos"){
+      return {id: id, text: data.text, done: !!data.done, done_by: data.doneBy || ""};
+    }
+    return {id: id, who: data.who, title: data.title, dates: data.dates || "", notes: data.notes || "", flights: data.flights || ""};
+  }
+  function deepMergeInto(target, patch){
+    Object.keys(patch).forEach(function(k){
+      var v = patch[k];
+      if (v && typeof v === "object" && !Array.isArray(v) && target[k] && typeof target[k] === "object"){
+        Object.assign(target[k], v);
+      } else {
+        target[k] = v;
+      }
+    });
+    return target;
+  }
+  function makeSupabaseDb(client){
+    function docRef(collection, id){
+      var col = idColumn(collection);
+      return {
+        set: function(data){
+          return client.from(collection).upsert(docToRow(collection, id, data)).then(function(res){
+            if (res.error) return Promise.reject(res.error);
+          });
+        },
+        update: function(patch){
+          return client.from(collection).select("*").eq(col, id).maybeSingle().then(function(res){
+            if (res.error || !res.data) return Promise.reject(res.error || new Error("not found: " + id));
+            var merged = deepMergeInto(rowToDoc(collection, res.data), patch);
+            return client.from(collection).update(docToRow(collection, id, merged)).eq(col, id);
+          }).then(function(res){
+            if (res && res.error) return Promise.reject(res.error);
+          });
+        },
+        delete: function(){
+          return client.from(collection).delete().eq(col, id).then(function(res){
+            if (res.error) return Promise.reject(res.error);
+          });
+        }
+      };
+    }
+    function collectionRef(name){
+      var lim = null;
+      return {
+        limit: function(n){ lim = n; return this; },
+        get: function(){
+          var q = client.from(name).select("*");
+          if (lim) q = q.limit(lim);
+          return q.then(function(res){
+            var docs = (res.data || []).map(function(row){
+              var id = row[idColumn(name)];
+              return {id: id, data: function(){ return rowToDoc(name, row); }};
+            });
+            return {docs: docs, empty: docs.length === 0};
+          });
+        },
+        onSnapshot: function(next, onError){
+          function deliver(rows){
+            var docs = rows.map(function(row){
+              var id = row[idColumn(name)];
+              return {id: id, data: function(){ return rowToDoc(name, row); }};
+            });
+            next({docs: docs, empty: docs.length === 0});
+          }
+          client.from(name).select("*").then(function(res){
+            if (res.error){ if (onError) onError({code: "unavailable", message: res.error.message}); return; }
+            deliver(res.data);
+          });
+          var channel = client.channel("realtime-" + name).on(
+            "postgres_changes", {event: "*", schema: "public", table: name},
+            function(){
+              client.from(name).select("*").then(function(res){ if (!res.error) deliver(res.data); });
+            }
+          ).subscribe();
+          return function unsubscribe(){ client.removeChannel(channel); };
+        },
+        doc: function(id){ return docRef(name, id); }
+      };
+    }
+    return {
+      collection: collectionRef,
+      doc: function(path){ var parts = path.split("/"); return docRef(parts[0], parts[1]); }
+    };
+  }
+
   // ---------------- db ----------------
   function initDb(){
-    if (!window.claude || !window.claude.use){
-      document.getElementById("dbStatus").textContent = "Running without live sync in this preview.";
+    var configured = window.supabase && SUPABASE_URL && SUPABASE_KEY &&
+      SUPABASE_URL.indexOf("__SUPABASE") === -1 && SUPABASE_KEY.indexOf("__SUPABASE") === -1;
+    if (!configured){
+      document.getElementById("dbStatus").textContent = "Running without live sync — Supabase isn't configured.";
       daysData = seedDaysLocal();
       tripsData = seedTripsLocal();
       todosData = seedTodosLocal();
       renderAll();
       return;
     }
-    window.claude.use("db").then(function(dbNs){
-      if (!dbNs){
-        document.getElementById("dbStatus").textContent = "Live sync unavailable — showing local copy only.";
-        daysData = seedDaysLocal();
-        tripsData = seedTripsLocal();
-        todosData = seedTodosLocal();
-        renderAll();
-        return;
-      }
-      db = dbNs;
+    try{
+      var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      db = makeSupabaseDb(client);
       subscribeAll();
-    }).catch(function(){
+    }catch(e){
       document.getElementById("dbStatus").textContent = "Live sync unavailable — showing local copy only.";
       daysData = seedDaysLocal();
       tripsData = seedTripsLocal();
       todosData = seedTodosLocal();
       renderAll();
-    });
+    }
   }
 
   function seedDaysLocal(){
@@ -778,49 +888,27 @@
 
   var subs = [];
   function subscribeAll(){
-    var seenDays = false, seenTrips = false, seenTodos = false;
-
     subs.push(db.collection("days").onSnapshot(function(snap){
-      if (!seenDays && snap.empty){
-        seedRemote();
-      }
-      seenDays = true;
-      snap.docs.forEach(function(doc){ daysData[doc.id] = doc.data(); });
+      var ids = {};
+      snap.docs.forEach(function(doc){ daysData[doc.id] = doc.data(); ids[doc.id] = true; });
+      Object.keys(daysData).forEach(function(id){ if (!ids[id]) delete daysData[id]; });
       renderDays();
       renderToday();
-    }, function(){ }));
+    }, function(e){ document.getElementById("dbStatus").textContent = "Sync error on \"days\": " + e.message; }));
 
     subs.push(db.collection("trips").onSnapshot(function(snap){
-      seenTrips = true;
       var ids = {};
-      snap.docs.forEach(function(doc){ tripsData[doc.id] = doc.data(); ids[doc.id]=true; });
-      Object.keys(tripsData).forEach(function(id){ if(!ids[id]) delete tripsData[id]; });
+      snap.docs.forEach(function(doc){ tripsData[doc.id] = doc.data(); ids[doc.id] = true; });
+      Object.keys(tripsData).forEach(function(id){ if (!ids[id]) delete tripsData[id]; });
       renderTrips();
-    }, function(){ }));
+    }, function(e){ document.getElementById("dbStatus").textContent = "Sync error on \"trips\": " + e.message; }));
 
     subs.push(db.collection("todos").onSnapshot(function(snap){
-      seenTodos = true;
       var ids = {};
-      snap.docs.forEach(function(doc){ todosData[doc.id] = doc.data(); ids[doc.id]=true; });
-      Object.keys(todosData).forEach(function(id){ if(!ids[id]) delete todosData[id]; });
+      snap.docs.forEach(function(doc){ todosData[doc.id] = doc.data(); ids[doc.id] = true; });
+      Object.keys(todosData).forEach(function(id){ if (!ids[id]) delete todosData[id]; });
       renderTodos();
-    }, function(){ }));
-
-    // fallback seed check for trips/todos independently (idempotent ids)
-    setTimeout(function(){
-      db.collection("trips").limit(1).get().then(function(s){
-        if (s.empty) TRIP_SEED.forEach(function(t){ db.doc("trips/"+t.id).set(t).catch(function(){}); });
-      }).catch(function(){});
-      db.collection("todos").limit(1).get().then(function(s){
-        if (s.empty) TODO_SEED.forEach(function(t){ db.doc("todos/"+t.id).set(t).catch(function(){}); });
-      }).catch(function(){});
-    }, 1200);
-  }
-
-  function seedRemote(){
-    SEPT.concat(OCT).forEach(function(day){
-      db.doc("days/"+day.date).set(buildDayDoc(day)).catch(function(){});
-    });
+    }, function(e){ document.getElementById("dbStatus").textContent = "Sync error on \"todos\": " + e.message; }));
   }
 
   function renderAll(){ renderToday(); renderDays(); renderTrips(); renderTodos(); }
