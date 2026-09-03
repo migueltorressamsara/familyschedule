@@ -293,14 +293,11 @@
   <div class="gate-card">
     <div class="tag">Casa Torres Pavón</div>
     <h1>Nuestro calendario</h1>
-    <input type="password" id="pw" placeholder="Contraseña" autocomplete="off">
-    <div class="err" id="pwErr"></div>
-    <button class="gate-btn" id="pwBtn">Entrar</button>
-    <div class="who-tiles" id="whoTiles" hidden>
+    <div class="who-tiles" id="whoTiles">
       <button class="who-tile ale" data-who="ale">Soy Ale</button>
       <button class="who-tile miguel" data-who="miguel">Soy Mike</button>
     </div>
-    <div class="gate-sub">Solo para nosotros dos — no es seguridad real, solo para saber quién marcó qué.</div>
+    <div class="gate-sub">Solo para nosotros dos — para saber quién marcó qué.</div>
   </div>
 </div>
 
@@ -499,7 +496,6 @@
 (function(){
   "use strict";
 
-  var PASSWORD = "martin";
   var SUPABASE_URL = "__SUPABASE_URL__";
   var SUPABASE_KEY = "__SUPABASE_KEY__";
   var TASK_DEFS = {
@@ -665,15 +661,12 @@
   // ---------------- gate ----------------
   var gateEl = document.getElementById("gate");
   var appEl = document.getElementById("app");
-  var pwInput = document.getElementById("pw");
-  var pwErr = document.getElementById("pwErr");
   var whoTiles = document.getElementById("whoTiles");
 
   function tryStoredAuth(){
     try{
-      var unlocked = localStorage.getItem("ct_unlocked") === "1";
       var who = localStorage.getItem("ct_profile");
-      if (unlocked && (who === "ale" || who === "miguel")){
+      if (who === "ale" || who === "miguel"){
         enterApp(who);
         return true;
       }
@@ -681,20 +674,6 @@
     return false;
   }
 
-  document.getElementById("pwBtn").addEventListener("click", function(){
-    if (pwInput.value === PASSWORD){
-      pwErr.textContent = "";
-      try{ localStorage.setItem("ct_unlocked","1"); }catch(e){}
-      whoTiles.hidden = false;
-      pwInput.disabled = true;
-      document.getElementById("pwBtn").disabled = true;
-    } else {
-      pwErr.textContent = "Not quite — try again.";
-    }
-  });
-  pwInput.addEventListener("keydown", function(e){
-    if (e.key === "Enter") document.getElementById("pwBtn").click();
-  });
   whoTiles.addEventListener("click", function(e){
     var btn = e.target.closest(".who-tile");
     if (!btn) return;
@@ -703,7 +682,7 @@
     enterApp(who);
   });
   document.getElementById("swapWho").addEventListener("click", function(){
-    try{ localStorage.removeItem("ct_profile"); localStorage.removeItem("ct_unlocked"); }catch(e){}
+    try{ localStorage.removeItem("ct_profile"); }catch(e){}
     location.reload();
   });
 
